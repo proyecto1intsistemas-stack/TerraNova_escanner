@@ -1,0 +1,30 @@
+async function init() {
+    try {
+        // Forzamos al navegador a pedir permiso de cámara ANTES de cargar el modelo
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        stream.getTracks().forEach(track => track.stop()); // Cerramos la prueba inicial
+
+        document.getElementById('status').innerText = "Cargando modelo...";
+        
+        model = await tmImage.load(URL + "model.json", URL + "metadata.json");
+        maxPredictions = model.getTotalClasses();
+
+        webcam = new tmImage.Webcam(300, 300, false); // Cambié a false por lo que hablamos del espejo
+        await webcam.setup(); 
+        await webcam.play();
+        
+        window.requestAnimationFrame(loop);
+        document.getElementById("webcam-container").appendChild(webcam.canvas);
+        labelContainer = document.getElementById("label-container");
+        labelContainer.innerHTML = "";
+        for (let i = 0; i < maxPredictions; i++) {
+            labelContainer.appendChild(document.createElement("div"));
+        }
+        document.getElementById('status').innerText = "✅ Escáner Activo";
+    } catch (err) {
+        console.error(err);
+        // Si sale undefined es porque el iframe de Wix bloqueó el objeto 'navigator'
+        document.getElementById('status').innerText = "❌ Bloqueo de Wix detectado";
+        alert("Error: Wix está bloqueando la cámara. Asegúrate de publicar el sitio y usar HTTPS.");
+    }
+}
